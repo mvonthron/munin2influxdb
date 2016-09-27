@@ -14,7 +14,6 @@ setup(
     scripts=['muninflux'],
     install_requires=['influxdb>=2.12.0', 'requests'],
     packages=find_packages(),
-    scripts=['munin-influxdb.sh', 'muninflux'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
