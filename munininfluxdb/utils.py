@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+from os.path import join, basename
 import sys
 
 
@@ -46,6 +47,13 @@ class ProgressBar():
         sys.stdout.flush()
         if percent >= 1:
             print("")
+
+
+prompt = input if sys.version_info >= (3, 0, 0) else raw_input
+
+
+def absolute_executable():
+    return join(sys.prefix, 'bin', basename(sys.argv[0]))
 
 
 def parse_handle(handle):

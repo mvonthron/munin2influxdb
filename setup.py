@@ -11,7 +11,11 @@ setup(
     url='http://github.com/mvonthron/munin-influxdb',
     license='BSD',
     py_modules=['munininfluxdb'],
-    scripts=['muninflux'],
+    entry_points={
+        'console_scripts': [
+            'muninflux = munininfluxdb.main:main',
+        ]
+    },
     install_requires=['influxdb>=2.12.0', 'requests'],
     packages=find_packages(),
     classifiers=[
