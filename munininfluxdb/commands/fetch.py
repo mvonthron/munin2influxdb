@@ -19,7 +19,7 @@ Currently, Munin needs to be still running to update the data in '/var/lib/munin
 try:
     import storable
 except ImportError:
-    from vendor import storable
+    from munininfluxdb.vendor import storable
 
 def pack_values(config, values):
     suffix = ":{0}".format(Defaults.DEFAULT_RRD_INDEX)
