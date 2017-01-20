@@ -57,10 +57,14 @@ Installation & Usage
 3. Run ```import``` command: 
 
   ```
-  $ sudo ./muninflux import
+  $ sudo muninflux import
   ```
   
-4. A cron job will be automatically added after installation to refresh data from munin every 5 minutes (Munin default)
+4. Install the CRON job to refresh data from munin every 5 minutes (Munin default)
+
+  ```
+  $ sudo muninflux cron install
+  ```
 
 ### Some more details
 

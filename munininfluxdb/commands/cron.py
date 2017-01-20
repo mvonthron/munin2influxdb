@@ -23,7 +23,7 @@ DESCRIPTION = 'Installs or uninstalls the CRON job'
 
 def uninstall_cron(args):
     if os.geteuid() != 0:
-        print("It seems you are not root, please run \"muninflux fetch --uninstall-cron\" again with root privileges")
+        print("It seems you are not root, please run \"muninflux cron uninstall\" again with root privileges")
         sys.exit(1)
 
     cron = crontab.CronTab(user=CRON_USER)
