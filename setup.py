@@ -16,7 +16,11 @@ setup(
             'muninflux = munininfluxdb.main:main',
         ]
     },
-    install_requires=['influxdb>=2.12.0', 'requests'],
+    install_requires=[
+        'influxdb>=2.12.0',
+        'requests',
+        'python-crontab>=2.1.1'
+    ],
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',

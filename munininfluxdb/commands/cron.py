@@ -3,6 +3,8 @@ import os
 import pwd
 import sys
 
+import crontab
+
 from munininfluxdb.utils import Symbol, absolute_executable
 
 
@@ -24,11 +26,6 @@ def uninstall_cron(args):
         print("It seems you are not root, please run \"muninflux fetch --uninstall-cron\" again with root privileges")
         sys.exit(1)
 
-    try:
-        import crontab
-    except ImportError:
-        from vendor import crontab
-
     cron = crontab.CronTab(user=CRON_USER)
     jobs = list(cron.find_comment(CRON_COMMENT))
     cron.remove(*jobs)
@@ -49,11 +46,6 @@ def install_cron(args):
     if os.geteuid() != 0:
         print("It seems you are not root, please run \"%s cron install\" again with root privileges")
         sys.exit(1)
-
-    try:
-        import crontab
-    except ImportError:
-        from vendor import crontab
 
     cron = crontab.CronTab(user=CRON_USER)
     job = cron.new(command=cmd, user=CRON_USER, comment=CRON_COMMENT)
