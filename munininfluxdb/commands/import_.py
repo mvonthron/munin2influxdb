@@ -24,40 +24,11 @@ See 'fetch -h' for details.
 """
 
 
-def retrieve_munin_configuration(settings):
-    """
-    """
-    print("Exploring Munin structure")
-
-    try:
-        settings = munin.discover_from_datafile(settings)
-    except Exception as e:
-        print("  {0} Could not process datafile ({1}), will read www and RRD cache instead".format(Symbol.NOK_RED, settings.paths['datafile']))
-
-        # read /var/cache/munin/www to check what's currently displayed on the dashboard
-        settings = munin.discover_from_www(settings)
-        settings = rrd.discover_from_rrd(settings, insert_missing=False)
-    else:
-        print("  {0} Found {1}: extracted {2} measurement units".format(Symbol.OK_GREEN, settings.paths['datafile'],
-                                                                        settings.nb_fields))
-
-    # for each host, find the /var/lib/munin/<host> directory and check if node name and plugin conf match RRD files
-    try:
-        rrd.check_rrd_files(settings)
-    except Exception as e:
-        print("  {0} {1}".format(Symbol.NOK_RED, e))
-    else:
-        print("  {0} Found {1} RRD files".format(Symbol.OK_GREEN, settings.nb_rrd_files))
-
-    return settings
-
-
 def main(args):
     print("{0}Munin to InfluxDB migration tool{1}".format(Color.BOLD, Color.CLEAR))
     print("-" * 20)
 
     settings = Settings(args)
-    settings = retrieve_munin_configuration(settings)
 
     # export RRD files as XML for (much) easier parsing (but takes much more time)
     print("\nExporting RRD databases:".format(settings.nb_rrd_files))
@@ -121,9 +92,6 @@ def main(args):
 
 
 def setup(parser):
-    parser.add_argument('--interactive', dest='interactive', action='store_true')
-    parser.add_argument('--no-interactive', dest='interactive', action='store_false')
-    parser.set_defaults(interactive=True)
     parser.add_argument('--xml-temp-path', default=Defaults.MUNIN_XML_FOLDER,
                         help='set path where to store result of RRD exported files (default: %(default)s)')
     parser.add_argument('--keep-temp', action='store_true',
