@@ -9,6 +9,7 @@ from munininfluxdb.utils import Symbol
 from munininfluxdb.settings import Defaults
 
 import influxdb
+import storable
 
 NAME = 'fetch'
 DESCRIPTION = """'fetch' command grabs fresh data gathered by a still running Munin installation and send it to InfluxDB.
@@ -16,10 +17,6 @@ DESCRIPTION = """'fetch' command grabs fresh data gathered by a still running Mu
 Currently, Munin needs to be still running to update the data in '/var/lib/munin/state-*' files.
 """
 
-try:
-    import storable
-except ImportError:
-    from munininfluxdb.vendor import storable
 
 def pack_values(config, values):
     suffix = ":{0}".format(Defaults.DEFAULT_RRD_INDEX)

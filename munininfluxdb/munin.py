@@ -6,7 +6,8 @@ import pprint
 from utils import ProgressBar, Symbol
 from settings import Settings
 
-from munininfluxdb.vendor import storable
+import storable
+
 
 def discover_from_datafile(settings):
     """

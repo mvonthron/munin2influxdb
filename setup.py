@@ -17,9 +17,10 @@ setup(
         ]
     },
     install_requires=[
-        'influxdb>=2.12.0',
+        'influxdb >= 2.12.0',
+        'python-crontab>=2.1.1',
         'requests',
-        'python-crontab>=2.1.1'
+        'storable >= 1.0.0',
     ],
     packages=find_packages(),
     classifiers=[
