@@ -1,8 +1,9 @@
 *.pyc
 *~
-venv/
-munininfluxdb/test*
 .idea/
-local/
+/*.egg-info
 data/
 lib/
+local/
+munininfluxdb/test*
+venv/
