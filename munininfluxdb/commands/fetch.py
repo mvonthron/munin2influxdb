@@ -107,7 +107,15 @@ def main(args):
         print("{0} Updated configuration: {1}".format(Symbol.OK_GREEN, f.name))
 
 
-def setup(parser):
+def setup(parser, injections):
+    """
+    Sets up CLI argument parsing.
+
+    The argument *injections* is currently unused in this command and is a
+    placeholder for the future.
+
+    :param parser: The argument parser for this subcommand.
+    """
     parser.add_argument('--config', default=Defaults.FETCH_CONFIG,
                         help='overrides the default configuration file (default: %(default)s)')
     parser.set_defaults(func=main)

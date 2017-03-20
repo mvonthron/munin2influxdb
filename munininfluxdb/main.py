@@ -4,9 +4,10 @@ import sys
 
 from munininfluxdb.utils import Symbol
 import munininfluxdb.commands.cron as cmd_cron
+import munininfluxdb.commands.dump as cmd_dump
 import munininfluxdb.commands.fetch as cmd_fetch
 import munininfluxdb.commands.import_ as cmd_import
-import munininfluxdb.commands.dump as cmd_dump
+import munininfluxdb.external.cron as cron
 
 
 def main():
@@ -24,7 +25,9 @@ def main():
     for subcommand in (cmd_import, cmd_fetch, cmd_cron, cmd_dump):
         subparser = subparsers.add_parser(subcommand.NAME,
                                           description=subcommand.DESCRIPTION)
-        subcommand.setup(subparser)
+        subcommand.setup(subparser, {
+            'cron': cron
+        })
 
     args = parser.parse_args()
     try:

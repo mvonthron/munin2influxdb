@@ -91,7 +91,15 @@ def main(args):
         print("Then we're good! Have a nice day!")
 
 
-def setup(parser):
+def setup(parser, injections):
+    """
+    Sets up CLI argument parsing.
+
+    The argument *injections* is currently unused in this command and is a
+    placeholder for the future.
+
+    :param parser: The argument parser for this subcommand.
+    """
     parser.add_argument('--xml-temp-path', default=Defaults.MUNIN_XML_FOLDER,
                         help='set path where to store result of RRD exported files (default: %(default)s)')
     parser.add_argument('--keep-temp', action='store_true',
