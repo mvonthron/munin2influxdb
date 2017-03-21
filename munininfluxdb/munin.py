@@ -1,4 +1,5 @@
 from __future__ import print_function
+from collections import namedtuple
 import os
 import sys
 import pprint
@@ -7,6 +8,35 @@ from utils import ProgressBar, Symbol
 from settings import Settings
 
 import storable
+
+DataFileLine = namedtuple(
+    'DataFileLine',
+    'plugin value domain host field property')
+
+
+def parse_datafile_line(line):
+    """
+    Takes a line from a munin datafile and parses out the different values.
+
+    Returns DataFileLine object.
+    """
+    # header line
+    if line.startswith("version"):
+        return None
+    else:
+        line = line.strip()
+
+    # ex: acadis.org;tesla:memory.swap.label swap
+    domain, tail = line.split(";", 1)
+    host, tail = tail.split(":", 1)
+    head, value = tail.split(" ", 1)
+    plugin_parts = head.rsplit(".", 2)
+    if len(plugin_parts) == 3:
+        plugin, field, property = plugin_parts
+    else:
+        return None
+
+    return DataFileLine(plugin, value, domain, host, field, property)
 
 
 def discover_from_datafile(settings):
@@ -23,22 +53,12 @@ def discover_from_datafile(settings):
             line_number = line_number + 1  # We count lines starting at 1. Not 0
 
             # header line
-            if line.startswith("version"):
+            parse_result = parse_datafile_line(line)
+            if not parse_result:
                 continue
             else:
-                line = line.strip()
+                plugin, value, domain, host, field, property = parse_result
 
-            # ex: acadis.org;tesla:memory.swap.label swap
-            domain, tail = line.split(";", 1)
-            host, tail = tail.split(":", 1)
-            head, value = tail.split(" ", 1)
-            plugin_parts = head.rsplit(".", 2)
-            if len(plugin_parts) == 3:
-                plugin, field, property = plugin_parts
-            else:
-                # TODO LOG.debug('Line #%d is an invalid plugin line. Skipping' %
-                # TODO           line_number)
-                continue
             # plugin name kept to allow running the plugin in fetch command
             plugin_name = plugin
 
