@@ -5,5 +5,4 @@
 data/
 lib/
 local/
-munininfluxdb/test*
 venv/
