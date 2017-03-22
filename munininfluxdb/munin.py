@@ -18,6 +18,10 @@ def parse_datafile_line(line):
     """
     Takes a line from a munin datafile and parses out the different values.
 
+    Lines are parsed as::
+
+        <domain>;<host>:<plugin>.<field>.<property> value
+
     Returns DataFileLine object.
     """
     # header line
@@ -39,6 +43,40 @@ def parse_datafile_line(line):
     return DataFileLine(plugin, value, domain, host, field, property)
 
 
+def populate_settings(settings, datafile):
+    """
+    Upgrades a settings object with values from a munin datafile.
+
+    WARNING: THe *settings* object will be modified in-place!
+
+    :param settings: The settings object to upgrade
+    :param datafile: The file-object to use for reading values from.
+    """
+    for line_number, line in enumerate(datafile.readlines()):
+        line_number = line_number + 1  # We count lines starting at 1. Not 0
+
+        # header line
+        parse_result = parse_datafile_line(line)
+        if not parse_result:
+            continue
+        else:
+            plugin, value, domain, host, field, property = parse_result
+
+        # plugin name kept to allow running the plugin in fetch command
+        plugin_name = plugin
+
+        # if plugin.startswith("diskstats"):
+        #     print(head, plugin_parts, len(plugin_parts), value)
+
+        if len(plugin.strip()) == 0:
+            # plugin properties
+            settings.domains[domain].hosts[host].plugins[field].settings[property] = value
+            settings.domains[domain].hosts[host].plugins[field].original_name = plugin_name
+        else:
+            # field properties
+            settings.domains[domain].hosts[host].plugins[plugin].fields[field].settings[property] = value
+
+
 def discover_from_datafile(settings):
     """
     /var/lib/munin/htmlconf.storable contains a copy of all informations required to build the graph (limits, legend, types...)
@@ -49,29 +87,7 @@ def discover_from_datafile(settings):
     """
 
     with open(settings.paths['datafile']) as f:
-        for line_number, line in enumerate(f.readlines()):
-            line_number = line_number + 1  # We count lines starting at 1. Not 0
-
-            # header line
-            parse_result = parse_datafile_line(line)
-            if not parse_result:
-                continue
-            else:
-                plugin, value, domain, host, field, property = parse_result
-
-            # plugin name kept to allow running the plugin in fetch command
-            plugin_name = plugin
-
-            # if plugin.startswith("diskstats"):
-            #     print(head, plugin_parts, len(plugin_parts), value)
-
-            if len(plugin.strip()) == 0:
-                # plugin properties
-                settings.domains[domain].hosts[host].plugins[field].settings[property] = value
-                settings.domains[domain].hosts[host].plugins[field].original_name = plugin_name
-            else:
-                # field properties
-                settings.domains[domain].hosts[host].plugins[plugin].fields[field].settings[property] = value
+        populate_settings(settings, f)
 
     # post parsing
     for domain, host, plugin, field in settings.iter_fields():

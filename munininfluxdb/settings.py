@@ -124,6 +124,7 @@ class Settings:
         self.nb_fields = 0
         self.nb_rrd_files = 0
 
+
     def save_fetch_config(self):
         config = {
             "influxdb": self.influxdb,
