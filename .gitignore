@@ -6,3 +6,4 @@ data/
 lib/
 local/
 venv/
+/.cache
