@@ -77,6 +77,31 @@ def populate_settings(settings, datafile):
             settings.domains[domain].hosts[host].plugins[plugin].fields[field].settings[property] = value
 
 
+def generate_filenames(settings):
+    """
+    Generates RRD and XML Filenames
+    """
+    for domain, host, plugin, field in settings.iter_fields():
+        _field = settings.domains[domain].hosts[host].plugins[plugin].fields[field]
+        type_suffix = _field.settings["type"].lower()[0]
+        _field.rrd_filename = os.path.join(settings.paths['munin'], domain, "{0}-{1}-{2}-{3}.rrd".format(host, plugin.replace(".", "-"), field, type_suffix))
+        _field.xml_filename = os.path.join(settings.paths['xml'], "{0}-{1}-{2}-{3}-{4}.xml".format(domain, host, plugin.replace(".", "-"), field, type_suffix))
+
+
+def cleanup(settings):
+    """
+    Removes unneeded fields (multigraph intermediaries).
+    """
+    for domain, host, plugin, field in settings.iter_fields():
+        # remove multigraph intermediates
+        if '.' in plugin:
+            mg_plugin, mg_field = plugin.split(".")
+            if mg_plugin in settings.domains[domain].hosts[host].plugins \
+                and mg_field in settings.domains[domain].hosts[host].plugins[mg_plugin].fields:
+
+                del settings.domains[domain].hosts[host].plugins[mg_plugin].fields[mg_field]
+
+
 def discover_from_datafile(settings):
     """
     /var/lib/munin/htmlconf.storable contains a copy of all informations required to build the graph (limits, legend, types...)
@@ -89,25 +114,11 @@ def discover_from_datafile(settings):
     with open(settings.paths['datafile']) as f:
         populate_settings(settings, f)
 
-    # post parsing
-    for domain, host, plugin, field in settings.iter_fields():
-        _field = settings.domains[domain].hosts[host].plugins[plugin].fields[field]
-        settings.nb_fields += 1
-
-        type_suffix = _field.settings["type"].lower()[0]
-        _field.rrd_filename = os.path.join(settings.paths['munin'], domain, "{0}-{1}-{2}-{3}.rrd".format(host, plugin.replace(".", "-"), field, type_suffix))
-        _field.xml_filename = os.path.join(settings.paths['xml'], "{0}-{1}-{2}-{3}-{4}.xml".format(domain, host, plugin.replace(".", "-"), field, type_suffix))
-
-        # remove multigraph intermediates
-        if '.' in plugin:
-            mg_plugin, mg_field = plugin.split(".")
-            if mg_plugin in settings.domains[domain].hosts[host].plugins \
-                and mg_field in settings.domains[domain].hosts[host].plugins[mg_plugin].fields:
-
-                del settings.domains[domain].hosts[host].plugins[mg_plugin].fields[mg_field]
-                settings.nb_fields -= 1
+    generate_filenames(settings)
+    cleanup(settings)
 
     return settings
+
 
 def discover_from_www(settings):
     """
