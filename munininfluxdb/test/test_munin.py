@@ -38,7 +38,14 @@ class TestDataFileHandling(unittest.TestCase):
     def setUp(self):
         EXAMPLE_DATA.seek(0)
 
-    def test_populate_settings(self):
+    def test_read_state_file(self):
+        self.skipTest("I don't know what the method "
+                      "read_state_file is supposed to do.")  # TODO
+
+    def test_populate_settings_from_www(self):
+        self.skipTest('I have no exmaple HTML file at hand right now')  # TODO
+
+    def test_populate_settings_from_datafile(self):
         expected_groups = {'group1', 'group2', 'group3'}
         expected_domains = {
             'top.level.domain', 'mailserver', 'blackdragon.fritz.box'}
