@@ -74,7 +74,7 @@ class Panel:
         @see http://munin-monitoring.org/wiki/fieldname.warning
         @see http://munin-monitoring.org/wiki/fieldname.critical
         """
-        warnings = {fields[field].settings.get("warning") for field in fields if "warnings" in fields[field].settings}
+        warnings = {fields[field].settings.get("warning") for field in fields if "warning" in fields[field].settings}
         criticals = {fields[field].settings.get("critical") for field in fields if "critical" in fields[field].settings}
 
         if len(warnings) > 1 or len(criticals) > 1:
@@ -112,7 +112,7 @@ class Panel:
         if hasArea:
             self.fill = 5
             self.linewidth = 0
-        if hasArea:
+        if hasStack:
             self.stack = True
 
         # build overrides list
