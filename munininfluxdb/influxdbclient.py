@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-import getpass
 import json
 from collections import defaultdict
 from pprint import pprint
@@ -106,10 +105,6 @@ class InfluxdbClient:
             series['columns'].remove('sequence_number')
 
         return res
-
-    @staticmethod
-    def ask_password():
-        return getpass.getpass("  - password: ")
 
     def prompt_setup(self):
         setup = self.settings.influxdb

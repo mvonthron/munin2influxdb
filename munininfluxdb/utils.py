@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 from os.path import join, basename
+from getpass import getpass
 import sys
 
 
@@ -54,6 +55,10 @@ prompt = input if sys.version_info >= (3, 0, 0) else raw_input
 
 def absolute_executable():
     return join(sys.prefix, 'bin', basename(sys.argv[0]))
+
+
+def ask_password():
+    return getpass("  - password: ")
 
 
 def parse_handle(handle):

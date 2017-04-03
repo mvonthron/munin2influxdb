@@ -6,7 +6,7 @@ from munininfluxdb import rrd
 from munininfluxdb.settings import Settings, Defaults
 from munininfluxdb.influxdbclient import InfluxdbClient
 from munininfluxdb.grafana import Dashboard
-from munininfluxdb.utils import Color, Symbol, prompt
+from munininfluxdb.utils import Color, Symbol, prompt, ask_password
 
 
 LOG = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def main(args):
     else:
         # even in non-interactive mode, we ask for the password if empty
         if not exporter.settings.influxdb['password']:
-            exporter.settings.influxdb['password'] = InfluxdbClient.ask_password()
+            exporter.settings.influxdb['password'] = ask_password()
         exporter.connect()
         exporter.test_db(exporter.settings.influxdb['database'])    # needed to create db if missing
 

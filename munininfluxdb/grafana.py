@@ -3,10 +3,9 @@ from __future__ import print_function
 import json
 import urlparse
 
-from utils import ProgressBar, Color, Symbol
+from utils import ProgressBar, Color, Symbol, ask_password
 from pprint import pprint
 from settings import Settings
-from influxdbclient import InfluxdbClient
 
 import requests
 
@@ -238,7 +237,7 @@ class Dashboard:
         if GrafanaApi.test_host(setup['host']):
             while not GrafanaApi.test_auth(setup['host'], setup['auth']):
                 user = raw_input("  - user [admin]: ").strip() or "admin"
-                password = InfluxdbClient.ask_password()
+                password = ask_password()
                 setup['auth'] = (user, password)
 
             setup['access'] = None
