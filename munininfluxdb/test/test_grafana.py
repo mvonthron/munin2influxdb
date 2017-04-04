@@ -1,16 +1,8 @@
-try:
-    from unittest.mock import patch, call, MagicMock
-    has_mock = True
-except ImportError:
-    try:
-        from mock import patch, call, MagicMock  # NOQA
-        has_mock = True
-    except ImportError:
-        has_mock = False
-
 import unittest
 
 import munininfluxdb.grafana as gf
+
+from . import mock
 
 
 DEFAULT_LINE_WIDTH = 1
@@ -55,12 +47,12 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(len(self.panel.queries), 1)
         self.assertEqual(self.panel.queries[0].field, "thefield")
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_sort_queries(self):
-        a = MagicMock(name='11:30', field='11', field_2=30)
-        b = MagicMock(name='21:40', field='21', field_2=40)
-        c = MagicMock(name='10:20', field='10', field_2=20)
-        d = MagicMock(name='20:10', field='20', field_2=10)
+        a = mock.MagicMock(name='11:30', field='11', field_2=30)
+        b = mock.MagicMock(name='21:40', field='21', field_2=40)
+        c = mock.MagicMock(name='10:20', field='10', field_2=20)
+        d = mock.MagicMock(name='20:10', field='20', field_2=10)
 
         expected = [c, a, d, b]
 
@@ -88,30 +80,30 @@ class TestPanel(unittest.TestCase):
         self.panel.process_graph_settings(plugin_settings)
         self.assertEqual(self.panel.leftYAxisLabel, 'vlabel second')
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_thresholds_multiple_warnings(self):
         fields = {
-            'foo': MagicMock(settings={'warning': '10:20'}),
-            'bar': MagicMock(settings={'warning': '20:30'}),
+            'foo': mock.MagicMock(settings={'warning': '10:20'}),
+            'bar': mock.MagicMock(settings={'warning': '20:30'}),
         }
         result = self.panel.process_graph_thresholds(fields)
         self.assertEqual(self.panel.thresholds, {})
         self.assertEqual(result, None)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_thresholds_multiple_criticals(self):
         fields = {
-            'foo': MagicMock(settings={'critical': '10:20'}),
-            'bar': MagicMock(settings={'critical': '20:30'}),
+            'foo': mock.MagicMock(settings={'critical': '10:20'}),
+            'bar': mock.MagicMock(settings={'critical': '20:30'}),
         }
         result = self.panel.process_graph_thresholds(fields)
         self.assertEqual(self.panel.thresholds, {})
         self.assertEqual(result, None)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_thresholds_critical(self):
         fields = {
-            'foo': MagicMock(settings={'critical': '10:20'}),
+            'foo': mock.MagicMock(settings={'critical': '10:20'}),
         }
         result = self.panel.process_graph_thresholds(fields)
         self.assertEqual(self.panel.thresholds, {
@@ -121,10 +113,10 @@ class TestPanel(unittest.TestCase):
         })
         self.assertEqual(result, None)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_thresholds_warning(self):
         fields = {
-            'bar': MagicMock(settings={'warning': '20:30'}),
+            'bar': mock.MagicMock(settings={'warning': '20:30'}),
         }
         result = self.panel.process_graph_thresholds(fields)
         self.assertEqual(self.panel.thresholds, {
@@ -133,10 +125,10 @@ class TestPanel(unittest.TestCase):
         })
         self.assertEqual(result, None)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_stack(self):
         fields = {
-            'baz': MagicMock(settings={'draw': 'STACK'}),
+            'baz': mock.MagicMock(settings={'draw': 'STACK'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertTrue(self.panel.stack)
@@ -146,10 +138,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_area(self):
         fields = {
-            'bar': MagicMock(settings={'draw': 'AREA'}),
+            'bar': mock.MagicMock(settings={'draw': 'AREA'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertFalse(self.panel.stack)
@@ -159,10 +151,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_line_area(self):
         fields = {
-            'foo': MagicMock(settings={'draw': 'LINEAREA'}),
+            'foo': mock.MagicMock(settings={'draw': 'LINEAREA'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertFalse(self.panel.stack)
@@ -175,10 +167,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_default(self):
         fields = {
-            'foo': MagicMock(settings={}),
+            'foo': mock.MagicMock(settings={}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertFalse(self.panel.stack)
@@ -188,10 +180,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_line(self):
         fields = {
-            'foo': MagicMock(settings={'draw': 'LINE'}),
+            'foo': mock.MagicMock(settings={'draw': 'LINE'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertFalse(self.panel.stack)
@@ -201,10 +193,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_linestack(self):
         fields = {
-            'foo': MagicMock(settings={'draw': 'LINESTACK'}),
+            'foo': mock.MagicMock(settings={'draw': 'LINESTACK'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertTrue(self.panel.stack)
@@ -214,10 +206,10 @@ class TestPanel(unittest.TestCase):
         self.assertEqual(self.panel.alias_colors, {})
         self.assertIsNone(result)
 
-    @unittest.skipUnless(has_mock, "unittest.mock is not available.")
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_process_graph_types_colours(self):
         fields = {
-            'foo': MagicMock(settings={'colour': '123456'}),
+            'foo': mock.MagicMock(settings={'colour': '123456'}),
         }
         result = self.panel.process_graph_types(fields)
         self.assertFalse(self.panel.stack)

@@ -6,18 +6,10 @@ unavailable, the tests are skipped.
 """
 import unittest
 
-try:
-    from unittest.mock import patch, call, MagicMock
-    has_mock = True
-except ImportError:
-    try:
-        from mock import patch, call, MagicMock
-        has_mock = True
-    except ImportError:
-        has_mock = False
+from . import mock
 
 
-@unittest.skipUnless(has_mock, "unittest.mock is not available.")
+@unittest.skipUnless(mock, "unittest.mock is not available.")
 class TestCron(unittest.TestCase):
     """
     Test Case for CRON commands.
@@ -25,11 +17,11 @@ class TestCron(unittest.TestCase):
 
     def test_install(self):
         from munininfluxdb.external import cron
-        with patch('munininfluxdb.external.cron.crontab') as ptch:
-            cron_instance = MagicMock()
+        with mock.patch('munininfluxdb.external.cron.crontab') as ptch:
+            cron_instance = mock.MagicMock()
             ptch.CronTab.return_value = cron_instance
 
-            cmd_instance = MagicMock()
+            cmd_instance = mock.MagicMock()
             cmd_instance.is_valid.return_value = True
             cmd_instance.is_enabled.return_value = True
             cron_instance.new.return_value = cmd_instance
@@ -46,8 +38,8 @@ class TestCron(unittest.TestCase):
 
     def test_uninstall(self):
         from munininfluxdb.external import cron
-        with patch('munininfluxdb.external.cron.crontab') as ptch:
-            cron_instance = MagicMock()
+        with mock.patch('munininfluxdb.external.cron.crontab') as ptch:
+            cron_instance = mock.MagicMock()
             ptch.CronTab.return_value = cron_instance
 
             cron_instance.find_comment.return_value = [1, 2, 3]
