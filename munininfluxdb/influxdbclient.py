@@ -5,6 +5,7 @@ from collections import defaultdict
 from pprint import pprint
 
 import influxdb
+from influxdb.client import InfluxDBClientError
 try:
     # poor man's check
     assert influxdb.__version__[0] not in ('0', '1')
@@ -33,7 +34,7 @@ class InfluxdbClient:
 
             # dummy request to test connection
             client.get_list_database()
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             self.client, self.valid = None, False
             if not silent:
                 print("  {0} Could not connect to database: {1}".format(Symbol.WARN_YELLOW, e))
@@ -62,20 +63,20 @@ class InfluxdbClient:
 
             try:
                 self.client.create_database(name)
-            except influxdb.client.InfluxDBClientError as e:
+            except InfluxDBClientError as e:
                 print("Error: could not create database: %s" % e)
                 return False
 
         try:
             self.client.switch_database(name)
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             print("Error: could not select database: %s" % e)
             return False
 
         # dummy query to test db
         try:
             res = self.client.query('show series')
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             print("Error: could not query database: %s" % e)
             return False
 
@@ -157,7 +158,7 @@ class InfluxdbClient:
         if body:
             try:
                 self.client.write_points(body, time_precision='s')
-            except influxdb.client.InfluxDBClientError as e:
+            except InfluxDBClientError as e:
                 raise Exception("Cannot insert in {0} series: {1}".format(measurement, e))
         else:
             raise ValueError("Measurement {0} did not contain any non-null value".format(measurement))
@@ -180,7 +181,7 @@ class InfluxdbClient:
                 try:
                     res = self.client.query("SELECT COUNT(\"{0}\") FROM \"{1}\"".format(field, name))
                     assert len(res) >= 0
-                except influxdb.client.InfluxDBClientError as e:
+                except InfluxDBClientError as e:
                     raise Exception(str(e))
                 except Exception as e:
                     raise Exception("Field \"{}\" in measurement {} doesn't exist. (May happen if original data contains only NaN entries)".format(field, name))
