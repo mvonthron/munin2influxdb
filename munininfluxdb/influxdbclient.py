@@ -217,19 +217,17 @@ class InfluxdbClient:
             print("  {0} Connection to database \"{1}\" OK".format(Symbol.OK_GREEN, self.settings.influxdb['database']))
 
         if self.settings.influxdb['group_fields']:
-            """
-            In "group_fields" mode, all fields of a same plugin (ex: system, user, nice, idle... of CPU usage)
-             will be represented as columns of the same time series in InfluxDB.
+            # In "group_fields" mode, all fields of a same plugin (ex: system, user, nice, idle... of CPU usage)
+            #  will be represented as columns of the same time series in InfluxDB.
 
-             Schema will be:
-                +----------------------+-------+----------+----------+-----------+
-                |   time_series_name   | col_0 |  col_1   |  col_2   | col_3 ... |
-                +----------------------+-------+----------+----------+-----------+
-                | domain.host.plugin   | time  | metric_1 | metric_2 | metric_3  |
-                | acadis.org.tesla.cpu | time  | system   | user     | nice      |
-                | ...                  |       |          |          |           |
-                +----------------------+-------+----------+----------+-----------+
-            """
+            #  Schema will be:
+            #     +----------------------+-------+----------+----------+-----------+
+            #     |   time_series_name   | col_0 |  col_1   |  col_2   | col_3 ... |
+            #     +----------------------+-------+----------+----------+-----------+
+            #     | domain.host.plugin   | time  | metric_1 | metric_2 | metric_3  |
+            #     | acadis.org.tesla.cpu | time  | system   | user     | nice      |
+            #     | ...                  |       |          |          |           |
+            #     +----------------------+-------+----------+----------+-----------+
             for domain, host, plugin in self.settings.iter_plugins():
                 _plugin = self.settings.domains[domain].hosts[host].plugins[plugin]
                 measurement = plugin
