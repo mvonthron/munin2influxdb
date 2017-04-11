@@ -221,5 +221,47 @@ class TestPanel(unittest.TestCase):
         })
         self.assertIsNone(result)
 
+    @unittest.skipUnless(mock, "unittest.mock is not available.")
     def test_to_json(self):
-        self.skipTest('TODO')
+        mock_settings = mock.MagicMock()
+        mock_settings.influxdb = {
+            'database': 'the-database'
+        }
+        mock_settings.grafana = {
+            'show_minmax': True,
+        }
+        # Add a dummy query so we get a value to check against below
+        query = mock.MagicMock()
+        query.to_json.return_value = {'1': '2'}
+        self.panel.queries = [query]
+
+        expected = {
+            'aliasColors': {},
+            'datasource': 'the-database',
+            'fill': 0,
+            'grid': {},
+            'leftYAxisLabel': None,
+            'legend': {'alignAsTable': True,
+                       'avg': True,
+                       'current': True,
+                       'max': True,
+                       'min': True,
+                       'rightSide': False,
+                       'show': True,
+                       'total': False,
+                       'values': True},
+            'linewidth': 1,
+            'seriesOverrides': [],
+            'span': 6,
+            'stack': False,
+            'targets': [{'1': '2'}],  # from the dummy query above
+            'title': 'Hello',
+            'tooltip': {'shared': False, 'value_type': 'individual'},
+            'type': 'graph',
+            'xaxis': {'show': True},
+            'yaxes': [{'format': 'short', 'label': None, 'logBase': 1},
+                      {'format': 'short', 'label': None, 'logBase': 1}]}
+
+        result = self.panel.to_json(mock_settings)
+
+        self.assertEqual(result, expected)
