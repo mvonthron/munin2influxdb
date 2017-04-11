@@ -265,3 +265,49 @@ class TestPanel(unittest.TestCase):
         result = self.panel.to_json(mock_settings)
 
         self.assertEqual(result, expected)
+
+
+class TestHeaderPanel(unittest.TestCase):
+
+    def setUp(self):
+        self.panel = gf.HeaderPanel(title="Hello")
+
+    def test_to_json(self):
+        expected = {
+            "title": "Hello",
+            "mode": "html",
+            "type": "text",
+            "editable": True,
+            "span": 12,
+            "links": [{
+                "type": "absolute",
+                "title": "Fork me on GitHub!",
+                "url": "https://github.com/mvonthron/munin-influxdb",
+            }],
+            "content": ""
+        }
+
+        result = self.panel.to_json(None)
+
+        self.assertEqual(result, expected)
+
+
+class TestRow(unittest.TestCase):
+
+    def test_add_panel(self):
+        row = gf.Row('Hello')
+        self.assertEqual(row.panels, [])
+        result = row.add_panel()
+        self.assertEqual(len(row.panels), 1)
+        self.assertIsInstance(result, gf.Panel)
+
+    def test_to_json(self):
+        row = gf.Row('Hello')
+        result = row.to_json(None)
+        expected = {
+            "title": 'Hello',
+            "height": '250px',
+            "panels": [],
+            "showTitle": True
+        }
+        self.assertEqual(result, expected)
