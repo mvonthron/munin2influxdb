@@ -1,6 +1,7 @@
 from __future__ import print_function
 import os
 import json
+import logging
 from collections import defaultdict
 from pprint import pprint
 
@@ -16,6 +17,9 @@ import rrd
 from utils import ProgressBar, parse_handle, Color, Symbol
 from rrd import read_xml_file
 from settings import Settings
+
+
+LOG = logging.getLogger(__name__)
 
 class InfluxdbClient:
     def __init__(self, settings):
@@ -39,6 +43,7 @@ class InfluxdbClient:
             if not silent:
                 print("  {0} Could not connect to database: {1}".format(Symbol.WARN_YELLOW, e))
         except Exception as e:
+            LOG.debug(str(e), exc_info=True)
             print("Error: %s" % e)
             self.client, self.valid = None, False
         else:
