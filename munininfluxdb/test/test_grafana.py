@@ -311,3 +311,90 @@ class TestRow(unittest.TestCase):
             "showTitle": True
         }
         self.assertEqual(result, expected)
+
+
+@unittest.skipUnless(mock, "unittest.mock is not available.")
+class TestGrafanaAPI(unittest.TestCase):
+
+    def setUp(self):
+        self.requests_patcher = mock.patch('munininfluxdb.grafana.requests')
+        self.__requests = self.requests_patcher.start()
+
+    def tearDown(self):
+        self.requests_patcher.stop()
+
+    def test_test_host(self):
+        self.__requests.get.return_value = mock.MagicMock(status_code=401)
+        result = gf.GrafanaApi.test_host('foo')
+        self.assertTrue(result)
+        self.__requests.get.assert_called_with('foo/api/org')
+
+    def test_test_auth(self):
+        self.__requests.get.return_value = mock.MagicMock(status_code=200)
+        result = gf.GrafanaApi.test_auth('foo', 'auth')
+        self.assertTrue(result)
+        self.__requests.get.assert_called_with('foo/api/org', auth='auth')
+
+    def test_create_datasource(self):
+        mock_settings = mock.MagicMock(
+            grafana={
+                'auth': 'val-auth',
+                'host': 'val-host',
+                'access': 'val-access',
+            },
+            influxdb={
+                'host': 'val-influxdb-host',
+                'port': 1234,
+                'user': 'val-influxdb-user',
+                'password': 'val-influxdb-passwd',
+            }
+        )
+
+        expected_payload = {
+            "name": "dsname",
+            "database": "dbname",
+            "type": "influxdb",
+            "url": "http://val-influxdb-host:1234",
+            "user": "val-influxdb-user",
+            "password": "val-influxdb-passwd",
+            "access": "val-access",
+            "basicAuth": False
+        }
+
+        self.__requests.post.return_value = mock.MagicMock(ok=True)
+
+        api = gf.GrafanaApi(mock_settings)
+        result = api.create_datasource('dsname', 'dbname')
+
+        self.__requests.post.assert_called_with(
+            'val-host/api/datasources',
+            auth='val-auth',
+            json=expected_payload
+        )
+
+        self.assertTrue(result)
+
+    def test_create_dashboard(self):
+
+        mock_settings = mock.MagicMock(
+            grafana={
+                'auth': 'val-auth',
+                'host': 'val-host',
+            },
+        )
+
+        mock_response = mock.MagicMock(ok=True)
+        mock_response.json.return_value = {'slug': 'val-slug'}
+        self.__requests.post.return_value = mock_response
+
+        request_data = {'dashboard': {'foo': 'bar'}}
+
+        api = gf.GrafanaApi(mock_settings)
+        result = api.create_dashboard({'foo': 'bar'})
+
+        self.__requests.post.assert_called_with(
+            'val-host/api/dashboards/db',
+            auth='val-auth',
+            json=request_data)
+
+        self.assertEqual(result, 'val-host/dashboard/db/val-slug')
