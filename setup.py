@@ -22,6 +22,10 @@ setup(
         'requests',
         'storable >= 1.0.0',
     ],
+    extras_require={
+        'dev': ['pytest-cov'],
+        'test': ['pytest', 'mock'],
+    },
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
