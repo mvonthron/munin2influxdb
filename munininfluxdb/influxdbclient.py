@@ -380,7 +380,7 @@ class InfluxdbClient:
         return self.settings
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # main used for dev/debug purpose only, use "import"
     class MockSettings:
         influxdb = parse_handle("root@192.168.1.100:8086/db/munin")

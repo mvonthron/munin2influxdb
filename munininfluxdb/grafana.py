@@ -380,7 +380,7 @@ class GrafanaApi:
             r.raise_for_status()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     # main for dev/debug purpose only
 
     dashboard = Dashboard("Munin")

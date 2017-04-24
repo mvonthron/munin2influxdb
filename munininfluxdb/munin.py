@@ -190,7 +190,7 @@ def read_state_file(filename):
         print("{0} Error: could read state file {1}: {2}".format(Symbol.NOK_RED, filename, e))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # main() for dev/debug only
     settings = discover_from_datafile("../data/datafile")
     # acadis.org;tesla:if_eth0.up.info
