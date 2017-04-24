@@ -357,7 +357,19 @@ class TestDashboard(unittest.TestCase):
         self.dash = gf.Dashboard(self.mock_settings)
 
     def test_generate_simple(self):
-        self.skipTest('Dashboard.generate_simple does not work as defined!')
+        structure = [
+            {'name': 'the-name', 'fields': ['col1', 'col2']}
+        ]
+        result = gf.Dashboard.generate_simple(self.mock_settings, structure)
+        self.assertEqual(len(result.rows), 1)
+        row = result.rows[0]
+        self.assertEqual(len(row.panels), 1)
+        panel = row.panels[0]
+        q1, q2 = panel.queries
+        self.assertEqual(q1.field, 'col1')
+        self.assertEqual(q1.measurement, 'the-name')
+        self.assertEqual(q2.field, 'col2')
+        self.assertEqual(q2.measurement, 'the-name')
 
     def test_prompt_setup(self):
         self.skipTest('Testing interactive prompts is cumbersome. '
