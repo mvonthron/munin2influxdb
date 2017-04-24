@@ -313,6 +313,160 @@ class TestRow(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
+class TestDashboard(unittest.TestCase):
+
+    def setUp(self):
+        self.mock_settings = mock.MagicMock(
+            grafana={
+                'auth': 'val-auth',
+                'host': 'val-host',
+                'access': 'val-access',
+                'title': 'DBTitle',
+                'tags': ['tag1', 'tag2'],
+                'graph_per_row': 5,
+                'show_minmax': True,
+            },
+            influxdb={
+                'host': 'val-influxdb-host',
+                'port': 1234,
+                'user': 'val-influxdb-user',
+                'password': 'val-influxdb-passwd',
+                'database': 'dbname',
+            },
+            domains={
+                'domain1': mock.MagicMock(
+                    name='mock-domain1',
+                    hosts={
+                        'host1': mock.MagicMock(
+                            name='mock-host1',
+                            plugins={
+                                'plugin1': mock.MagicMock(
+                                    name='mock-plugin1',
+                                    settings={'graph_title': 'Plugin1'},
+                                    fields={
+                                        'field1': mock.MagicMock(
+                                            name='mock-field1')
+                                    }
+                                ),
+                            }
+                        )
+                    }
+                )
+            }
+        )
+        self.dash = gf.Dashboard(self.mock_settings)
+
+    def test_generate_simple(self):
+        self.skipTest('Dashboard.generate_simple does not work as defined!')
+
+    def test_prompt_setup(self):
+        self.skipTest('Testing interactive prompts is cumbersome. '
+                      'Skipping for now!')
+
+    def test_add_header(self):
+        mock_settings = mock.MagicMock(
+            influxdb={'a': 1, 'b': 2}
+        )
+        self.assertEqual(len(self.dash.rows), 0)
+        self.dash.add_header(mock_settings)
+        self.assertEqual(len(self.dash.rows), 1)
+        created_panels = self.dash.rows[0].panels
+        self.assertEqual(len(created_panels), 1)
+        self.assertIsInstance(created_panels[0], gf.HeaderPanel)
+        self.assertEqual(created_panels[0].title,
+                         'Welcome to your new dashboard!')
+
+    def test_add_row(self):
+        self.assertEqual(len(self.dash.rows), 0)
+        self.dash.add_row(title="Hello World!")
+        self.assertEqual(len(self.dash.rows), 1)
+        self.assertIsInstance(self.dash.rows[0], gf.Row)
+        self.assertEqual(self.dash.rows[0].title, 'Hello World!')
+
+    def test_to_json(self):
+        settings = mock.MagicMock()
+        result = self.dash.to_json(settings)
+        expected = {
+            'id': None,
+            'title': 'DBTitle',
+            'tags': ['tag1', 'tag2'],
+            'rows': [],
+            'timezone': 'browser',
+            'time': {'from': 'now-5d', 'to': 'now'},
+        }
+        settings.assert_not_called()
+        self.assertEqual(result, expected)
+
+    def test_save(self):
+        from io import BytesIO
+        fakefile = BytesIO()
+        with mock.patch('munininfluxdb.grafana.open') as mock_open, \
+                mock.patch('munininfluxdb.grafana.json') as mock_json:
+            mock_open.return_value = fakefile
+            expected_json_content = self.dash.to_json(None)
+            self.dash.save('/tmp/foo.json')
+            mock_json.dump.assert_called_with(expected_json_content, fakefile)
+
+    def test_upload(self):
+        with mock.patch('munininfluxdb.grafana.GrafanaApi') as mck_api:
+            self.dash.upload()
+            mck_api.assert_called_with(self.mock_settings)
+            mck_api().create_datasource.assert_called_with('dbname', 'dbname')
+            json_content = self.dash.to_json(None)
+            mck_api().create_dashboard.assert_called_with(json_content)
+
+    def test_generate(self):
+        self.maxDiff = None
+
+        self.assertEqual(self.dash.rows, [])
+
+        self.dash.generate()
+
+        self.assertEqual(len(self.dash.rows), 2)  # Panel + 1 Plugin
+        row_1, row_2 = self.dash.rows
+        self.assertIsInstance(row_1.panels[0], gf.HeaderPanel)
+
+        self.assertEqual(len(row_1.panels), 1)
+        expected = {
+            'aliasColors': {},
+            'datasource': 'dbname',
+            'fill': 0,
+            'grid': {},
+            'leftYAxisLabel': None,
+            'legend': {
+                'alignAsTable': True,
+                'avg': True,
+                'current': True,
+                'max': True,
+                'min': True,
+                'rightSide': False,
+                'show': True,
+                'total': False,
+                'values': True},
+            'linewidth': 1,
+            'seriesOverrides': [],
+            'span': 2,
+            'stack': False,
+            'targets': [{
+                'alias': 'field1',
+                'dsType': 'influxdb',
+                'groupBy': [{'params': ['$interval'], 'type': 'time'},
+                            {'params': ['null'], 'type': 'fill'}],
+                'measurement': 'plugin1',
+                'resultFormat': 'time_series',
+                'select': [[{'params': ['field1'], 'type': 'field'},
+                            {'params': [], 'type': 'mean'}]]
+            }],
+            'title': 'Plugin1',
+            'tooltip': {'shared': False, 'value_type': 'individual'},
+            'type': 'graph',
+            'xaxis': {'show': True},
+            'yaxes': [{'format': 'short', 'label': None, 'logBase': 1},
+                      {'format': 'short', 'label': None, 'logBase': 1}]}
+        result_json = row_2.panels[0].to_json(self.mock_settings)
+        self.assertEqual(result_json, expected)
+
+
 @unittest.skipUnless(mock, "unittest.mock is not available.")
 class TestGrafanaAPI(unittest.TestCase):
 
