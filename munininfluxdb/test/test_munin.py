@@ -3,10 +3,14 @@ from textwrap import dedent
 import unittest
 
 from munininfluxdb.munin import (
+    cleanup,
     generate_filenames,
     populate_settings,
 )
 from munininfluxdb.settings import Settings
+
+from . import mock
+
 
 EXAMPLE_DATA = StringIO(dedent(
     u'''\
@@ -132,3 +136,38 @@ class TestDataFileHandling(unittest.TestCase):
 
         self.assertEqual(expected_xml_filenames, xml_filenames)
         self.assertEqual(expected_rrd_filenames, rrd_filenames)
+
+    def test_cleanup(self):
+        plugins = {
+            'mg_plugin1': mock.MagicMock(
+                fields={
+                    'mg_field1': [1, 2, 3]
+                }
+            ),
+            'mg_plugin2': mock.MagicMock(
+                fields={
+                    'mg_field2': [4, 5, 6]
+                }
+            )
+        }
+        mock_settings = mock.MagicMock(
+            domains={
+                'domain': mock.MagicMock(
+                    hosts={
+                        'host': mock.MagicMock(
+                            plugins=plugins
+                        )
+                    }
+                )
+            }
+        )
+        mock_settings.iter_fields.return_value = [
+            ('domain', 'host', 'mg_plugin1.mg_field1', 'field1'),
+            ('domain', 'host', 'mg_plugin2.mg_field2', 'field2'),
+        ]
+
+        self.assertTrue('mg_field1' in plugins['mg_plugin1'].fields)
+        self.assertTrue('mg_field2' in plugins['mg_plugin2'].fields)
+        cleanup(mock_settings)
+        self.assertFalse('mg_field1' in plugins['mg_plugin1'].fields)
+        self.assertFalse('mg_field2' in plugins['mg_plugin2'].fields)
