@@ -67,7 +67,6 @@ def main(args=None, commands=None):
         print("\n{0} Canceled.".format(Symbol.NOK_RED))
         return 1
     except Exception as e:
-        raise
         print("{0} Error: {1}".format(Symbol.NOK_RED, e))
         return 1
     return 0
