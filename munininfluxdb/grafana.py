@@ -3,10 +3,9 @@ from __future__ import print_function
 import json
 import urlparse
 
-from utils import ProgressBar, Color, Symbol
+from utils import ProgressBar, Color, Symbol, ask_password
 from pprint import pprint
 from settings import Settings
-from influxdbclient import InfluxdbClient
 
 import requests
 
@@ -74,7 +73,7 @@ class Panel:
         @see http://munin-monitoring.org/wiki/fieldname.warning
         @see http://munin-monitoring.org/wiki/fieldname.critical
         """
-        warnings = {fields[field].settings.get("warning") for field in fields if "warnings" in fields[field].settings}
+        warnings = {fields[field].settings.get("warning") for field in fields if "warning" in fields[field].settings}
         criticals = {fields[field].settings.get("critical") for field in fields if "critical" in fields[field].settings}
 
         if len(warnings) > 1 or len(criticals) > 1:
@@ -112,7 +111,7 @@ class Panel:
         if hasArea:
             self.fill = 5
             self.linewidth = 0
-        if hasArea:
+        if hasStack:
             self.stack = True
 
         # build overrides list
@@ -238,7 +237,7 @@ class Dashboard:
         if GrafanaApi.test_host(setup['host']):
             while not GrafanaApi.test_auth(setup['host'], setup['auth']):
                 user = raw_input("  - user [admin]: ").strip() or "admin"
-                password = InfluxdbClient.ask_password()
+                password = ask_password()
                 setup['auth'] = (user, password)
 
             setup['access'] = None
@@ -381,7 +380,7 @@ class GrafanaApi:
             r.raise_for_status()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     # main for dev/debug purpose only
 
     dashboard = Dashboard("Munin")

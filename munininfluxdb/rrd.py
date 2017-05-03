@@ -91,12 +91,14 @@ def export_to_xml_in_folder(source, destination=Defaults.MUNIN_XML_FOLDER):
     Converts all *.rrd files in source folder
     """
     assert os.path.exists(source)
+    # TODO This try/except should be replaced with "if os.path.exists()"
     try:
         os.makedirs(destination)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
 
+    # TODO Domain is always empty? This leads to empty folder notes in the "join" calls below! Does this function actually work?
     filelist = [("", os.path.join(source, file)) for file in os.listdir(source) if file.endswith(".rrd")]
     nb_files = len(filelist)
     progress_bar = ProgressBar(nb_files)

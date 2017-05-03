@@ -1,4 +1,5 @@
 from __future__ import print_function
+from collections import namedtuple
 import os
 import sys
 import pprint
@@ -6,7 +7,100 @@ import pprint
 from utils import ProgressBar, Symbol
 from settings import Settings
 
-from vendor import storable
+import storable
+
+DataFileLine = namedtuple(
+    'DataFileLine',
+    'plugin value domain host field property')
+
+
+def parse_datafile_line(line):
+    """
+    Takes a line from a munin datafile and parses out the different values.
+
+    Lines are parsed as::
+
+        <domain>;<host>:<plugin>.<field>.<property> value
+
+    Returns DataFileLine object.
+    """
+    # header line
+    if line.startswith("version"):
+        return None
+    else:
+        line = line.strip()
+
+    # ex: acadis.org;tesla:memory.swap.label swap
+    domain, tail = line.split(";", 1)
+    host, tail = tail.split(":", 1)
+    head, value = tail.split(" ", 1)
+    plugin_parts = head.rsplit(".", 2)
+    if len(plugin_parts) == 3:
+        plugin, field, property = plugin_parts
+    else:
+        return None
+
+    return DataFileLine(plugin, value, domain, host, field, property)
+
+
+def populate_settings(settings, datafile):
+    """
+    Upgrades a settings object with values from a munin datafile.
+
+    WARNING: THe *settings* object will be modified in-place!
+
+    :param settings: The settings object to upgrade
+    :param datafile: The file-object to use for reading values from.
+    """
+    for line_number, line in enumerate(datafile.readlines()):
+        line_number = line_number + 1  # We count lines starting at 1. Not 0
+
+        # header line
+        parse_result = parse_datafile_line(line)
+        if not parse_result:
+            continue
+        else:
+            plugin, value, domain, host, field, property = parse_result
+
+        # plugin name kept to allow running the plugin in fetch command
+        plugin_name = plugin
+
+        # if plugin.startswith("diskstats"):
+        #     print(head, plugin_parts, len(plugin_parts), value)
+
+        if len(plugin.strip()) == 0:
+            # plugin properties
+            settings.domains[domain].hosts[host].plugins[field].settings[property] = value
+            settings.domains[domain].hosts[host].plugins[field].original_name = plugin_name
+        else:
+            # field properties
+            settings.domains[domain].hosts[host].plugins[plugin].fields[field].settings[property] = value
+
+
+def generate_filenames(settings):
+    """
+    Generates RRD and XML Filenames
+    """
+    for domain, host, plugin, field in settings.iter_fields():
+        _field = settings.domains[domain].hosts[host].plugins[plugin].fields[field]
+        type_suffix = _field.settings["type"].lower()[0]
+        _field.rrd_filename = os.path.join(settings.paths['munin'], domain, "{0}-{1}-{2}-{3}.rrd".format(host, plugin.replace(".", "-"), field, type_suffix))
+        _field.xml_filename = os.path.join(settings.paths['xml'], "{0}-{1}-{2}-{3}-{4}.xml".format(domain, host, plugin.replace(".", "-"), field, type_suffix))
+
+
+def cleanup(settings):
+    """
+    Removes unneeded fields (multigraph intermediaries).
+    """
+    for domain, host, plugin, field in settings.iter_fields():
+        # remove multigraph intermediates
+        if '.' in plugin:
+            mg_plugin, mg_field = plugin.split(".")
+            if mg_plugin in settings.domains[domain].hosts[host].plugins \
+                and mg_field in settings.domains[domain].hosts[host].plugins[mg_plugin].fields:
+
+                del settings.domains[domain].hosts[host].plugins[mg_plugin].fields[mg_field]
+
 
 def discover_from_datafile(settings):
     """
@@ -18,59 +112,13 @@ def discover_from_datafile(settings):
     """
 
     with open(settings.paths['datafile']) as f:
-        for line_number, line in enumerate(f.readlines()):
-            line_number = line_number + 1  # We count lines starting at 1. Not 0
+        populate_settings(settings, f)
 
-            # header line
-            if line.startswith("version"):
-                continue
-            else:
-                line = line.strip()
-
-            # ex: acadis.org;tesla:memory.swap.label swap
-            domain, tail = line.split(";", 1)
-            host, tail = tail.split(":", 1)
-            head, value = tail.split(" ", 1)
-            plugin_parts = head.rsplit(".", 2)
-            if len(plugin_parts) == 3:
-                plugin, field, property = plugin_parts
-            else:
-                # TODO LOG.debug('Line #%d is an invalid plugin line. Skipping' %
-                # TODO           line_number)
-                continue
-            # plugin name kept to allow running the plugin in fetch command
-            plugin_name = plugin
-
-            # if plugin.startswith("diskstats"):
-            #     print(head, plugin_parts, len(plugin_parts), value)
-
-            if len(plugin.strip()) == 0:
-                # plugin properties
-                settings.domains[domain].hosts[host].plugins[field].settings[property] = value
-                settings.domains[domain].hosts[host].plugins[field].original_name = plugin_name
-            else:
-                # field properties
-                settings.domains[domain].hosts[host].plugins[plugin].fields[field].settings[property] = value
-
-    # post parsing
-    for domain, host, plugin, field in settings.iter_fields():
-        _field = settings.domains[domain].hosts[host].plugins[plugin].fields[field]
-        settings.nb_fields += 1
-
-        type_suffix = _field.settings["type"].lower()[0]
-        _field.rrd_filename = os.path.join(settings.paths['munin'], domain, "{0}-{1}-{2}-{3}.rrd".format(host, plugin.replace(".", "-"), field, type_suffix))
-        _field.xml_filename = os.path.join(settings.paths['xml'], "{0}-{1}-{2}-{3}-{4}.xml".format(domain, host, plugin.replace(".", "-"), field, type_suffix))
-
-        # remove multigraph intermediates
-        if '.' in plugin:
-            mg_plugin, mg_field = plugin.split(".")
-            if mg_plugin in settings.domains[domain].hosts[host].plugins \
-                and mg_field in settings.domains[domain].hosts[host].plugins[mg_plugin].fields:
-
-                del settings.domains[domain].hosts[host].plugins[mg_plugin].fields[mg_field]
-                settings.nb_fields -= 1
+    generate_filenames(settings)
+    cleanup(settings)
 
     return settings
+
 
 def discover_from_www(settings):
     """
@@ -142,7 +190,7 @@ def read_state_file(filename):
         print("{0} Error: could read state file {1}: {2}".format(Symbol.NOK_RED, filename, e))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # main() for dev/debug only
     settings = discover_from_datafile("../data/datafile")
     # acadis.org;tesla:if_eth0.up.info

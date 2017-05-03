@@ -1,11 +1,12 @@
 from __future__ import print_function
 import os
-import getpass
 import json
+import logging
 from collections import defaultdict
 from pprint import pprint
 
 import influxdb
+from influxdb.client import InfluxDBClientError
 try:
     # poor man's check
     assert influxdb.__version__[0] not in ('0', '1')
@@ -16,6 +17,9 @@ import rrd
 from utils import ProgressBar, parse_handle, Color, Symbol
 from rrd import read_xml_file
 from settings import Settings
+
+
+LOG = logging.getLogger(__name__)
 
 class InfluxdbClient:
     def __init__(self, settings):
@@ -34,11 +38,12 @@ class InfluxdbClient:
 
             # dummy request to test connection
             client.get_list_database()
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             self.client, self.valid = None, False
             if not silent:
                 print("  {0} Could not connect to database: {1}".format(Symbol.WARN_YELLOW, e))
         except Exception as e:
+            LOG.debug(str(e), exc_info=True)
             print("Error: %s" % e)
             self.client, self.valid = None, False
         else:
@@ -63,20 +68,20 @@ class InfluxdbClient:
 
             try:
                 self.client.create_database(name)
-            except influxdb.client.InfluxDBClientError as e:
+            except InfluxDBClientError as e:
                 print("Error: could not create database: %s" % e)
                 return False
 
         try:
             self.client.switch_database(name)
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             print("Error: could not select database: %s" % e)
             return False
 
         # dummy query to test db
         try:
             res = self.client.query('show series')
-        except influxdb.client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             print("Error: could not query database: %s" % e)
             return False
 
@@ -106,10 +111,6 @@ class InfluxdbClient:
             series['columns'].remove('sequence_number')
 
         return res
-
-    @staticmethod
-    def ask_password():
-        return getpass.getpass("  - password: ")
 
     def prompt_setup(self):
         setup = self.settings.influxdb
@@ -162,7 +163,7 @@ class InfluxdbClient:
         if body:
             try:
                 self.client.write_points(body, time_precision='s')
-            except influxdb.client.InfluxDBClientError as e:
+            except InfluxDBClientError as e:
                 raise Exception("Cannot insert in {0} series: {1}".format(measurement, e))
         else:
             raise ValueError("Measurement {0} did not contain any non-null value".format(measurement))
@@ -185,7 +186,7 @@ class InfluxdbClient:
                 try:
                     res = self.client.query("SELECT COUNT(\"{0}\") FROM \"{1}\"".format(field, name))
                     assert len(res) >= 0
-                except influxdb.client.InfluxDBClientError as e:
+                except InfluxDBClientError as e:
                     raise Exception(str(e))
                 except Exception as e:
                     raise Exception("Field \"{}\" in measurement {} doesn't exist. (May happen if original data contains only NaN entries)".format(field, name))
@@ -221,19 +222,17 @@ class InfluxdbClient:
             print("  {0} Connection to database \"{1}\" OK".format(Symbol.OK_GREEN, self.settings.influxdb['database']))
 
         if self.settings.influxdb['group_fields']:
-            """
-            In "group_fields" mode, all fields of a same plugin (ex: system, user, nice, idle... of CPU usage)
-             will be represented as columns of the same time series in InfluxDB.
+            # In "group_fields" mode, all fields of a same plugin (ex: system, user, nice, idle... of CPU usage)
+            #  will be represented as columns of the same time series in InfluxDB.
 
-             Schema will be:
-                +----------------------+-------+----------+----------+-----------+
-                |   time_series_name   | col_0 |  col_1   |  col_2   | col_3 ... |
-                +----------------------+-------+----------+----------+-----------+
-                | domain.host.plugin   | time  | metric_1 | metric_2 | metric_3  |
-                | acadis.org.tesla.cpu | time  | system   | user     | nice      |
-                | ...                  |       |          |          |           |
-                +----------------------+-------+----------+----------+-----------+
-            """
+            #  Schema will be:
+            #     +----------------------+-------+----------+----------+-----------+
+            #     |   time_series_name   | col_0 |  col_1   |  col_2   | col_3 ... |
+            #     +----------------------+-------+----------+----------+-----------+
+            #     | domain.host.plugin   | time  | metric_1 | metric_2 | metric_3  |
+            #     | acadis.org.tesla.cpu | time  | system   | user     | nice      |
+            #     | ...                  |       |          |          |           |
+            #     +----------------------+-------+----------+----------+-----------+
             for domain, host, plugin in self.settings.iter_plugins():
                 _plugin = self.settings.domains[domain].hosts[host].plugins[plugin]
                 measurement = plugin
@@ -381,7 +380,7 @@ class InfluxdbClient:
         return self.settings
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # main used for dev/debug purpose only, use "import"
     class MockSettings:
         influxdb = parse_handle("root@192.168.1.100:8086/db/munin")

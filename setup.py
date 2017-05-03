@@ -11,8 +11,21 @@ setup(
     url='http://github.com/mvonthron/munin-influxdb',
     license='BSD',
     py_modules=['munininfluxdb'],
-    scripts=['muninflux'],
-    install_requires=['influxdb>=2.12.0', 'requests'],
+    entry_points={
+        'console_scripts': [
+            'muninflux = munininfluxdb.main:main',
+        ]
+    },
+    install_requires=[
+        'influxdb >= 2.12.0',
+        'python-crontab>=2.1.1',
+        'requests',
+        'storable >= 1.0.0',
+    ],
+    extras_require={
+        'dev': ['pytest-cov'],
+        'test': ['pytest', 'mock'],
+    },
     packages=find_packages(),
     classifiers=[
         'Development Status :: 4 - Beta',
