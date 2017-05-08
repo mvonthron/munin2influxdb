@@ -142,6 +142,10 @@ class Settings:
                        for d, h, p, field in self.iter_fields()
                        if get_field(self, d, h, p, field).xml_imported
             },
+			"tags_hosts": {get_field(self, d, h, p, field).influxdb_measurement: { h : {"domain": d, "host": h,"plugin": p} }
+                       for d, h, p, field in self.iter_fields()
+                       if get_field(self, d, h, p, field).xml_imported
+            },
             "lastupdate": None
         }
 
