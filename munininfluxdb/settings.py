@@ -125,6 +125,7 @@ class Settings:
         self.nb_rrd_files = 0
 
     def save_fetch_config(self):
+        print ("Saving fetch config to {0}...".format(self.paths['fetch_config']))
         config = {
             "influxdb": self.influxdb,
             "statefiles": [os.path.join(self.paths['munin'], "state-{0}-{1}.storable".format(domain, host))
@@ -142,7 +143,7 @@ class Settings:
                        for d, h, p, field in self.iter_fields()
                        if get_field(self, d, h, p, field).xml_imported
             },
-			"tags_hosts": {get_field(self, d, h, p, field).influxdb_measurement: { h : {"domain": d, "host": h,"plugin": p} }
+            "tags_hosts": {get_field(self, d, h, p, field).influxdb_measurement: { h : {"domain": d, "host": h,"plugin": p} }
                        for d, h, p, field in self.iter_fields()
                        if get_field(self, d, h, p, field).xml_imported
             },
