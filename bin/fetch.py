@@ -49,8 +49,10 @@ def pack_values(config, values):
         if name in config['metrics']:
             measurement, field = config['metrics'][name]
             #data[measurement]['time'] = int(latest_date)
-            data[measurement]['time'] = time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime(int(latest_date)))
-            data[measurement][field] = float(latest_value) if latest_value != 'U' else None   # 'U' is Munin value for unknown
+            reported_value = float(latest_value) if latest_value != 'U' else None # 'U' is Munin value for unknown
+            if reported_value:
+                data[measurement]['time'] = time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime(int(latest_date)))
+                data[measurement][field] = reported_value
         else:
             age = (date - int(latest_date)) // (24*3600)
             if age < 7:
