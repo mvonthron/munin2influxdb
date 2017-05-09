@@ -6,6 +6,7 @@ import os
 import sys
 import argparse
 import time
+import pprint
 from collections import defaultdict
 
 from munininfluxdb.utils import Symbol
@@ -105,6 +106,9 @@ def main(config_filename=Defaults.FETCH_CONFIG):
                 client.write_points(data, time_precision='s')
             except influxdb.client.InfluxDBClientError as e:
                 print("  {0} Could not write data to database: {1}".format(Symbol.WARN_YELLOW, e))
+                print ("#=========================================#")
+                pprint(data)
+                print ("#=========================================#")
             else:
                 config['lastupdate'] = max(config['lastupdate'], int(values[1]))
                 print("{0} Successfully written {1} new measurements".format(Symbol.OK_GREEN, len(data)))
