@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import argparse
+import time
 from collections import defaultdict
 
 from munininfluxdb.utils import Symbol
