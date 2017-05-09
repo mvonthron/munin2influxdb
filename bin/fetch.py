@@ -49,8 +49,10 @@ def pack_values(config, values):
         if name in config['metrics']:
             measurement, field = config['metrics'][name]
             #data[measurement]['time'] = int(latest_date)
-            data[measurement]['time'] = time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime(int(latest_date)))
-            data[measurement][field] = float(latest_value) if latest_value != 'U' else None   # 'U' is Munin value for unknown
+            reported_value = float(latest_value) if latest_value != 'U' else None
+            if reported_value:
+                data[measurement]['time'] = time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime(int(latest_date)))
+                data[measurement][field] = float(latest_value) if latest_value != 'U' else None   # 'U' is Munin value for unknown
         else:
             age = (date - int(latest_date)) // (24*3600)
             if age < 7:
@@ -107,7 +109,7 @@ def main(config_filename=Defaults.FETCH_CONFIG):
             except influxdb.client.InfluxDBClientError as e:
                 print("  {0} Could not write data to database: {1}".format(Symbol.WARN_YELLOW, e))
                 print ("#=========================================#")
-                pprint(data)
+                pprint.pprint(data)
                 print ("#=========================================#")
             else:
                 config['lastupdate'] = max(config['lastupdate'], int(values[1]))
