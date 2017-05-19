@@ -5,6 +5,8 @@ import json
 import os
 import sys
 import argparse
+import time
+import pprint
 from collections import defaultdict
 
 from munininfluxdb.utils import Symbol
@@ -35,6 +37,7 @@ def pack_values(config, values):
     data = defaultdict(dict)
 
     for metric in metrics:
+        host  = metric.split("/")[-1].split("-")[0]
         (latest_date, latest_value), (previous_date, previous_value) = metrics[metric].values()
 
         # usually stored as rrd-filename:42 with 42 being a constant column name for RRD files
@@ -45,9 +48,11 @@ def pack_values(config, values):
 
         if name in config['metrics']:
             measurement, field = config['metrics'][name]
-
-            data[measurement]['time'] = int(latest_date)
-            data[measurement][field] = float(latest_value) if latest_value != 'U' else None   # 'U' is Munin value for unknown
+            #data[measurement]['time'] = int(latest_date)
+            reported_value = float(latest_value) if latest_value != 'U' else None
+            if reported_value:
+                data[measurement]['time'] = time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime(int(latest_date)))
+                data[measurement][field] = float(latest_value) if latest_value != 'U' else None   # 'U' is Munin value for unknown
         else:
             age = (date - int(latest_date)) // (24*3600)
             if age < 7:
@@ -56,7 +61,7 @@ def pack_values(config, values):
 
     return [{
             "measurement": measurement,
-            "tags": config['tags'][measurement],
+            "tags": config['tags_hosts'][measurement][host],
             "time": fields['time'],
             "fields": {key: value for key, value in fields.iteritems() if key != 'time'}
         } for measurement, fields in data.iteritems()]
@@ -103,6 +108,9 @@ def main(config_filename=Defaults.FETCH_CONFIG):
                 client.write_points(data, time_precision='s')
             except influxdb.client.InfluxDBClientError as e:
                 print("  {0} Could not write data to database: {1}".format(Symbol.WARN_YELLOW, e))
+                print ("#=========================================#")
+                pprint.pprint(data)
+                print ("#=========================================#")
             else:
                 config['lastupdate'] = max(config['lastupdate'], int(values[1]))
                 print("{0} Successfully written {1} new measurements".format(Symbol.OK_GREEN, len(data)))
