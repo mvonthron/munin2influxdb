@@ -93,14 +93,14 @@ def discover_from_www(settings):
 
     print("Reading Munin www cache: ({0})".format(folder))
     with open(os.path.join(folder, "index.html")) as f:
-        root = BeautifulSoup(f.read())
+        root = BeautifulSoup(f.read(), "html.parser")
 
     domains = root.findAll("span", {"class": "domain"})
 
     # hosts and domains are at the same level in the tree so let's open the file
     for domain in domains:
         with open(os.path.join(folder, domain.text, "index.html")) as f:
-            domain_root = BeautifulSoup(f.read())
+            domain_root = BeautifulSoup(f.read(), "html.parser")
 
         links = domain_root.find(id="content").findAll("a")
         progress_bar = ProgressBar(len(links), title=domain.text)
